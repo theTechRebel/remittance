@@ -1,7 +1,7 @@
 const Remittance = artifacts.require("Remittance");
 
 contract('Remittance',accounts=>{
-    const[owner,sender,reciever] = accounts;
+    const[owner,sender,reciever,newOwner] = accounts;
     let instance;
 
     const getEventResult = (txObj, eventName) => {
@@ -73,5 +73,44 @@ contract('Remittance',accounts=>{
         tx = await instance.redeemEther(hash,{from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
     });
+
+    it("should allow owner to change owner address",async()=>{
+        const txObj = await instance.changeOwner(newOwner,{from:owner});
+        //check status
+        assert.isTrue(txObj.receipt.status,"receipt status must be true");
+        //check event
+        const event = getEventResult(txObj,"LogOwnerChanged");
+        assert.equal(event.sender,owner,"Old owner must be changed");
+        assert.equal(event.owner,newOwner,"New owner must be set");
+      });
+  
+      it("should allow activation and deactivation of contract",async()=>{
+        var txObj = await instance.deactivateContract({from:owner});
+        //check status
+        assert.isTrue(txObj.receipt.status,"receipt status must be true");
+        //check event
+        var event = getEventResult(txObj,"LogActivateDeactivate");
+        assert.equal(event.sender,owner,"function must have been execute by owner");
+        assert.equal(event.active,false,"contract must be deactivated");
+  
+        txObj = await instance.activateContract({from:owner});
+        //check status
+        assert.isTrue(txObj.receipt.status,"receipt status must be true");
+        //check event
+        event = getEventResult(txObj,"LogActivateDeactivate");
+        assert.equal(event.sender,owner,"function must have been execute by owner");
+        assert.equal(event.active,true,"failed to actiavted");
+      });
+  
+      it("should allow killing of contract by owner", async()=>{
+        var txObj = await instance.deactivateContract({from:owner});
+         assert.isTrue(txObj.receipt.status,"receipt status must be true");
+         txObj = await instance.killContract({from:owner});
+         assert.isTrue(txObj.receipt.status,"receipt status must be true");
+         //check event
+        const event = getEventResult(txObj,"LogContractDeath");
+        assert.equal(event.sender,owner,"function must have been executed by owner");
+      })
+  
 
 })
