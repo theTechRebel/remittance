@@ -9,14 +9,13 @@ contract Activatable is Owned{
     //log contract activation and deactivation
     event LogActivateDeactivate(address indexed sender, bool indexed active);
     //log contract activation and deactivation
-    event LogContractDeath(address indexed sender, bool indexed active);
+    event LogContractDeath(address indexed sender);
 
     //upon instantiation set the active state of the contract
     constructor(bool _activate) public{
         activated = _activate;
         killed = false;
         emit LogActivateDeactivate(msg.sender,_activate);
-        emit LogContractDeath(msg.sender, false);
     }
 
     //modifier check if contract is alive
