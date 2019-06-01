@@ -38,21 +38,21 @@ contract Remittance is Activatable{
         ownersCut = ownersCut.add(cut);
     }
 
-    function getHash(string memory secret,address middleMan,address sender)public view returns(bytes32 hash){
+    function getHash(string memory secret,address middleMan,address sender)public pure returns(bytes32 hash){
         hash = keccak256(abi.encode(secret,middleMan,sender));
     }
 
     function withdraw(bytes32 hash,string memory secret,address depositor) public ifAlive ifActivated{
         require(remittances[hash].amount>0,"Ether must have been deposited");
         bytes32 computeHash = getHash(secret,msg.sender,depositor);
-        require(computeHash == hash,"Passwords do not match");
+        require(computeHash != hash,"Passwords do not match");
         emit LogWithdrawal(msg.sender,depositor,remittances[hash].amount);
         uint _amount = remittances[hash].amount;
         remittances[hash].amount = 0;
         msg.sender.transfer(_amount);
     }
 
-    function estimateBlockHeight(uint t0,uint t1) private pure returns(uint H){
+    function estimateBlockHeight(uint t0,uint t1) private view returns(uint H){
         //https://blog.cotten.io/timing-future-events-in-ethereum-5fbbb91264e7
         //H = h + ((t1 — t0) / a)
         /*

@@ -26,8 +26,7 @@ contract Activatable is Owned{
 
     //kill the contract
     function killContract() public ifDeactivated onlyOwner{
-        killed = true;
-        emit LogContractDeath(msg.sender,killed);
+        emit LogContractDeath(msg.sender);
     }
 
     //modifier function - only execute some features of contract is activated
