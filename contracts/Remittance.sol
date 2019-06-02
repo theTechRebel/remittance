@@ -45,7 +45,7 @@ contract Remittance is Activatable{
     function withdraw(bytes32 hash,string memory secret,address depositor) public ifAlive ifActivated{
         require(remittances[hash].amount>0,"Ether must have been deposited");
         bytes32 computeHash = getHash(secret,msg.sender,depositor);
-        require(computeHash != hash,"Passwords do not match");
+        require(computeHash == hash,"Passwords do not match");
         emit LogWithdrawal(msg.sender,depositor,remittances[hash].amount);
         uint _amount = remittances[hash].amount;
         remittances[hash].amount = 0;

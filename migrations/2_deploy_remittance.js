@@ -1,5 +1,8 @@
 const Remittance = artifacts.require("Remittance");
 
 module.exports = function(deployer) {
-  deployer.deploy(Remittance,true,1559398276,1559399416);
+  var setDeadline = + new Date();
+  var _date = new Date(setDeadline);
+  var futureDate  = _date.setMonth(_date.getMonth()+1);
+  deployer.deploy(Remittance,true,setDeadline,futureDate);
 };

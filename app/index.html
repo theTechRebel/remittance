@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<title>Remittance</title>
+<meta charset="utf-8">
+<script src="js/app.js"></script>
+</head>
+<body>
+
+<div class="row">
+    <div class="col-md-12" align="center">
+           <h4> The Remittance contract balance <span id="balance">is loading...</span><br/>
+            Contract Cut: <span id="cut"></span><br/>
+            Contract Max Deadline: <span id="maxdeadline"></span><br/>
+            Current User Address: <span id="currentAddress"></span><br/>
+           </h4>
+           <div id="msg" align="center"></div>
+           <div id="otp" align="center"></div>
+    </div>
+</div>
+<hr/>
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-3">
+            <h3 align="center">Withdraw Cut</h3>
+            <br/>
+        <div class="form-group">
+            <button id="withdraw_owner" class="btn btn-primary">Withdraw Ether</button>
+        </div>
+    </div>
+    <div class="col-md-3">
+            <h3 align="center">Withdraw Remittance</h3>
+            <br/>
+        <div class="form-group">
+            <div class="form-group">
+                    <label for="sender_withdraw">Sender Address</label>
+                    <input type="text" class="form-control" id="sender_withdraw" placeholder="0x000000000000000000">
+                </div>
+            <div class="form-group">
+                <label for="secret_withdraw">Secret for withdrawal</label>
+                <input type="text"  class="form-control" id="secret_withdraw" placeholder="secret">
+            </div>
+        <div class="form-group">
+            <label for="hash_withdraw">Hash for withdrawal</label>
+            <input type="text" class="form-control" id="hash_withdraw" placeholder="hash">
+        </div>
+            <button id="withdraw" class="btn btn-primary">Withdraw Ether</button>
+        </div>
+    </div>
+    <div class="col-md-3" >
+        <h3 align="center">Remit Here</h3>
+    <br/>
+    <div class="form-group">
+        <label for="ether">Ether to Remit</label>
+        <input name="amount" aria-describedby="etherHelp" class="form-control" id="ether" type="number" placeholder="0" />
+        <small id="etherHelp" class="form-text text-muted">The amount entered is expressed in Wei.</small>
+    </div>
+    <div class="form-group">
+        <label for="reciever1">Middle Man / Reciever Address</label>
+        <input type="text" class="form-control" id="reciever" placeholder="0x000000000000000000">
+    </div>
+    <div class="form-group">
+            <label for="reciever2">Secret</label>
+            <input type="text"  class="form-control" id="secret" placeholder="secret">
+    </div>
+    <div class="form-group">
+        <label for="reciever2">Deadline Date</label>
+        <input type="date"  class="form-control" id="deadline" placeholder="deadline">
+</div>
+    <button id="remit" class="btn btn-primary">Remit Ether</button>
+    <br/>
+    </div>
+    
+</div>
+
+
+</body>
+</html>
