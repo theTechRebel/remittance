@@ -76,7 +76,7 @@ App = {
 
             $("#balance").html(bal+" Wei");
             $("#cut").html(cut+" Wei");
-            $("#maxdeadline").html("Block "+maxdeadline);
+            $("#maxdeadline").html(maxdeadline+" Blocks");
             
           console.log(bal);
         },
@@ -88,22 +88,12 @@ App = {
 
             var contract = await App.contract.deployed();
 
-            var hash = await contract.getHash.call(secret,reciever,App.account);
-            console.log(hash);
-            $("#otp").html("Hash: "+hash+" Secret: "+secret);
-
-            var deadlineStart = + new Date();
-            var endOfDeadline = +new Date(deadline);
-
-            console.log(deadlineStart);
-            console.log(endOfDeadline);
-
-            var call = await contract.remitEther.call(hash,deadlineStart,endOfDeadline,{from:App.account,value:amount});
+            var call = await contract.remitEther.call(secret,reciever,deadline,{from:App.account,value:amount});
             console.log(call);
             
             if(call){
                 console.log(call);
-                await contract.remitEther(hash,deadlineStart,endOfDeadline,{from:App.account,value:amount})
+                await contract.remitEther(secret,reciever,deadline,{from:App.account,value:amount})
                 .on("transactionHash",async (hash)=>{
                     var msg =  "<div class='alert alert-primary' role='alert'>Your transaction with Hash"+hash+" is on its way!</div>";
                     $("#msg").html(msg);
@@ -134,19 +124,13 @@ App = {
 
         },
         handleWithdraw:async()=>{
-            var sender = $("#sender_withdraw").val();
             var secret = $("#secret_withdraw").val();
-            var hash = $("#hash_withdraw").val();
-
             var contract = await App.contract.deployed();
-            var converted = await web3.utils.hexToBytes(hash);
-            console.log(converted);
-            console.log(hash);
-            var call = await contract.withdraw.call(hash,secret,sender,{from:App.account});
+            var call = await contract.withdraw.call(secret,{from:App.account});
             console.log(call);
 
             if(call){
-                await contract.withdraw(hash,secret,sender,{from:App.account})
+                await contract.withdraw(secret,{from:App.account})
                 .on("transactionHash",async (hash)=>{
                     var msg =  "<div class='alert alert-primary' role='alert'>Your transaction with Hash"+hash+" is on its way!</div>";
                     $("#msg").html(msg);

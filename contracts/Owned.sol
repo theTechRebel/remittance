@@ -24,4 +24,8 @@ contract Owned{
         owner = newOwner;
         emit LogOwnerChanged(msg.sender,newOwner);
     }
+
+    function getOwner() public view returns (address _owner){
+        _owner = owner;
+    }
 }

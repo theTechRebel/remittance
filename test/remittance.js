@@ -1,7 +1,7 @@
 const Remittance = artifacts.require("Remittance");
 
 contract('Remittance',accounts=>{
-    const[owner,sender,reciever,newOwner] = accounts;
+    const[newOwner,owner,sender,reciever] = accounts;
     let instance;
 
     const getEventResult = (txObj, eventName) => {
@@ -12,67 +12,124 @@ contract('Remittance',accounts=>{
           return undefined;
         }
       };
+      
+      const mineBlock = function () {
+        return new Promise((resolve, reject) => {
+          web3.currentProvider.send({
+            jsonrpc: "2.0",
+            method: "evm_mine"
+          }, (err, result) => {
+            if(err){ return reject(err) }
+            return resolve(result)
+          });
+        })
+      };
 
       beforeEach(async() =>{
-		instance = await Remittance.new(true,1559402931,1560007731, { from: owner });
+		instance = await Remittance.new(true,2100,50, { from: owner });
     });
 
     it("should remit ether", async()=>{
         const secret = "secret";
         const ether = 1e18;
-        const hash = await instance.getHash(secret,reciever,sender);
-        const tx = await instance.remitEther(hash,1559402931,1559507731,{value:ether});
+        const tx = await instance.remitEther(secret,reciever,5,{value:ether});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         let balance = await web3.eth.getBalance(instance.address);
-        console.log(balance);
+        console.log("Remitted: "+balance);
     });
 
     it("should withdraw ether", async()=>{
         const secret = "secret";
-        const ether = 1e18;
-        const hash = await instance.getHash(secret,reciever,sender);
-
-        var tx = await instance.remitEther(hash,1559402931,1559607731,{value:ether});
+        var ether = 1e18;
+        //1. Deposit
+        var tx = await instance.remitEther(secret,reciever,5,{value:ether,from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         let deposit = await web3.eth.getBalance(instance.address);
         console.log("Deposited: "+deposit);
 
-        tx = await instance.withdraw(hash,secret,owner,{from:reciever});
+        //2. Withdraw
+        const balbefore = web3.utils.toBN(await web3.eth.getBalance(reciever));
+        console.log("Reciever balance before: "+balbefore.toString());
+        tx = await instance.withdraw(secret,{from:reciever});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
-
-        let withdrawn = await web3.eth.getBalance(instance.address);
-        console.log("Balance after deposit: "+withdrawn);
+            //calculate transaction cost
+        const transaction =  await web3.eth.getTransaction(tx.tx);
+            // transaction cost = gasUsed x gasPrice
+        const txCost = web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toBN(transaction.gasPrice));
+        const balafter = web3.utils.toBN(await web3.eth.getBalance(reciever));
+        console.log("Reciever balance after: "+balafter.toString());
+        const withdrawn = balafter.sub((balbefore.sub(txCost)));
+        console.log("Withdrawn: "+withdrawn);
         
-        console.log("Withdraw Ether: "+(deposit-withdrawn));
+        //3. Compare
+        const fee = web3.utils.toBN(await instance.cut());
+        console.log("The fee:"+fee);
+        const withdrawable = web3.utils.toBN(ether).sub(fee);
+        console.log("Withdrawable: "+withdrawable);
+        assert.equal(withdrawn.toString(),withdrawable.toString(),"Withdrawn amount must equal withdrawable amount");
     });
 
     it("should withdraw cut", async()=>{
         const secret = "secret";
         const ether = 1e18;
-        const hash = await instance.getHash(secret,reciever,sender);
 
-        var tx = await instance.remitEther(hash,1559402931,1559607731,{value:ether});
+        //1. Depsot
+        var tx = await instance.remitEther(secret,reciever,5,{value:ether,from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         let deposit = await web3.eth.getBalance(instance.address);
-        console.log("Deposited: "+deposit);
 
+        //2. Withdraw cut
+        const balbefore = web3.utils.toBN(await web3.eth.getBalance(owner));
+        console.log("Balanace before withdrawl: "+balbefore);
         tx = await instance.withdrawCut({from:owner});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
+        const fee = web3.utils.toBN(await instance.cut.call());
+         //calculate transaction cost
+        const transaction =  await web3.eth.getTransaction(tx.tx);
+         // transaction cost = gasUsed x gasPrice
+         const txCost = web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toBN(transaction.gasPrice));
+        
+        //3. compare
+         const balafter = web3.utils.toBN(await web3.eth.getBalance(owner));
+         console.log("Balance after withdrawal: "+balafter);
+        const withdrawn = balafter.sub((balbefore.sub(txCost)));
+        assert.equal(withdrawn.toString(),fee.toString(),"Withdrawn amount should equal fee");
     });
 
-    it("should redeem ether", async()=>{
+    it("should redeem ether after time has elapsed", async()=>{
         const secret = "secret";
         const ether = 1e18;
-        const hash = await instance.getHash(secret,reciever,sender);
 
-        var tx = await instance.remitEther(hash,1559402931,1559402932,{value:ether});
+        var tx = await instance.remitEther(secret,reciever,5,{value:ether,from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
+        for(i=0;i<10;i++){
+          await mineBlock();
+        }
         let deposit = await web3.eth.getBalance(instance.address);
         console.log("Deposited: "+deposit);
 
-        tx = await instance.redeemEther(hash,{from:sender});
+        tx = await instance.redeemEther(secret,reciever,{from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
     });
+
+    it("should fail to redeem ether before time has elapsed", async()=>{
+      const secret = "secret";
+      const ether = 1e18;
+
+      var tx = await instance.remitEther(secret,reciever,30,{value:ether,from:sender});
+      assert.isTrue(tx.receipt.status,"transaction must be succesful");
+      let deposit = await web3.eth.getBalance(instance.address);
+      console.log("Deposited: "+deposit);
+      for(i=0;i<28;i++){
+        await mineBlock();
+      }
+      try{
+      tx = await instance.redeemEther(secret,reciever,{from:sender});
+      }catch(ex){
+        return true;
+      }
+      throw new Error("Redeeming ether should have failed")
+  });
 
     it("should allow owner to change owner address",async()=>{
         const txObj = await instance.changeOwner(newOwner,{from:owner});
