@@ -11,7 +11,6 @@ contract Remittance is Activatable{
         address sender;
         uint amount;
         uint deadline;
-        bool used;
     }
     mapping (bytes32 => Remit) private remittances;
     mapping (address=>uint) private ownersCut;
@@ -34,14 +33,13 @@ contract Remittance is Activatable{
     function remitEther(bytes32 hash,uint deadline)public ifAlive ifActivated payable{
          require(msg.value > 0,"You must send some Ether");
          require(deadline<maxDeadline,"Deadline must be less than max deadline");
-         require(hash.length>0,"Secret can not be empty string");
+         require(hash!=0,"Secret can not be empty string");
          require(msg.value>cut,"Ether sent must be more than cut");
-        require(remittances[hash].used==false,"This secret has already been used");
+        require(remittances[hash].sender==address(0),"This secret has already been used");
         emit LogBalanceDeposited(msg.sender,msg.value);
         remittances[hash].deadline = block.number.add(deadline);
         remittances[hash].sender = msg.sender;
         remittances[hash].amount = msg.value.sub(cut);
-        remittances[hash].used = true;
         ownersCut[getOwner()] = ownersCut[getOwner()].add(cut);
     }
 
@@ -50,6 +48,7 @@ contract Remittance is Activatable{
     }
 
     function withdraw(bytes32 secret) public ifAlive ifActivated{
+        require(secret!=0,"Secret can not be empty string");
         bytes32 hash = getHash(secret,msg.sender);
         require(remittances[hash].amount>0,"Ether must have been deposited");
         require(block.number<remittances[hash].deadline,"Deposited deadline has expired");
