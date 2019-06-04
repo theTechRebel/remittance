@@ -87,13 +87,15 @@ App = {
             var amount = $("#ether").val();
 
             var contract = await App.contract.deployed();
+            var converted = await web3.utils.fromAscii(secret);
+            var hash = await contract.getHash(converted,reciever);
 
-            var call = await contract.remitEther.call(secret,reciever,deadline,{from:App.account,value:amount});
+            var call = await contract.remitEther.call(hash,deadline,{from:App.account,value:amount});
             console.log(call);
             
             if(call){
                 console.log(call);
-                await contract.remitEther(secret,reciever,deadline,{from:App.account,value:amount})
+                await contract.remitEther(hash,deadline,{from:App.account,value:amount})
                 .on("transactionHash",async (hash)=>{
                     var msg =  "<div class='alert alert-primary' role='alert'>Your transaction with Hash"+hash+" is on its way!</div>";
                     $("#msg").html(msg);
@@ -126,11 +128,12 @@ App = {
         handleWithdraw:async()=>{
             var secret = $("#secret_withdraw").val();
             var contract = await App.contract.deployed();
-            var call = await contract.withdraw.call(secret,{from:App.account});
+            var converted = await web3.utils.fromAscii(secret);
+            var call = await contract.withdraw.call(converted,{from:App.account});
             console.log(call);
 
             if(call){
-                await contract.withdraw(secret,{from:App.account})
+                await contract.withdraw(converted,{from:App.account})
                 .on("transactionHash",async (hash)=>{
                     var msg =  "<div class='alert alert-primary' role='alert'>Your transaction with Hash"+hash+" is on its way!</div>";
                     $("#msg").html(msg);
