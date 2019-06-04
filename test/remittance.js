@@ -32,7 +32,9 @@ contract('Remittance',accounts=>{
     it("should remit ether", async()=>{
         const secret = "secret";
         const ether = 1e18;
-        const tx = await instance.remitEther(secret,reciever,5,{value:ether});
+        var converted = await web3.utils.fromAscii(secret);
+        var hash = await instance.getHash(converted,reciever);
+        const tx = await instance.remitEther(hash,5,{value:ether});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         let balance = await web3.eth.getBalance(instance.address);
         console.log("Remitted: "+balance);
@@ -42,7 +44,9 @@ contract('Remittance',accounts=>{
         const secret = "secret";
         var ether = 1e18;
         //1. Deposit
-        var tx = await instance.remitEther(secret,reciever,5,{value:ether,from:sender});
+        var converted = await web3.utils.fromAscii(secret);
+        var hash = await instance.getHash(converted,reciever);
+        var tx = await instance.remitEther(hash,5,{value:ether,from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         let deposit = await web3.eth.getBalance(instance.address);
         console.log("Deposited: "+deposit);
@@ -50,7 +54,7 @@ contract('Remittance',accounts=>{
         //2. Withdraw
         const balbefore = web3.utils.toBN(await web3.eth.getBalance(reciever));
         console.log("Reciever balance before: "+balbefore.toString());
-        tx = await instance.withdraw(secret,{from:reciever});
+        tx = await instance.withdraw(converted,{from:reciever});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
             //calculate transaction cost
         const transaction =  await web3.eth.getTransaction(tx.tx);
@@ -74,7 +78,9 @@ contract('Remittance',accounts=>{
         const ether = 1e18;
 
         //1. Depsot
-        var tx = await instance.remitEther(secret,reciever,5,{value:ether,from:sender});
+        var converted = await web3.utils.fromAscii(secret);
+        var hash = await instance.getHash(converted,reciever);
+        var tx = await instance.remitEther(hash,5,{value:ether,from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         let deposit = await web3.eth.getBalance(instance.address);
 
@@ -100,7 +106,9 @@ contract('Remittance',accounts=>{
         const secret = "secret";
         const ether = 1e18;
 
-        var tx = await instance.remitEther(secret,reciever,5,{value:ether,from:sender});
+        var converted = await web3.utils.fromAscii(secret);
+        var hash = await instance.getHash(converted,reciever);
+        var tx = await instance.remitEther(hash,5,{value:ether,from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
         for(i=0;i<10;i++){
           await mineBlock();
@@ -108,7 +116,7 @@ contract('Remittance',accounts=>{
         let deposit = await web3.eth.getBalance(instance.address);
         console.log("Deposited: "+deposit);
 
-        tx = await instance.redeemEther(secret,reciever,{from:sender});
+        tx = await instance.redeemEther(hash,{from:sender});
         assert.isTrue(tx.receipt.status,"transaction must be succesful");
     });
 
@@ -116,7 +124,9 @@ contract('Remittance',accounts=>{
       const secret = "secret";
       const ether = 1e18;
 
-      var tx = await instance.remitEther(secret,reciever,30,{value:ether,from:sender});
+      var converted = await web3.utils.fromAscii(secret);
+      var hash = await instance.getHash(converted,reciever);
+      var tx = await instance.remitEther(hash,30,{value:ether,from:sender});
       assert.isTrue(tx.receipt.status,"transaction must be succesful");
       let deposit = await web3.eth.getBalance(instance.address);
       console.log("Deposited: "+deposit);
@@ -124,7 +134,7 @@ contract('Remittance',accounts=>{
         await mineBlock();
       }
       try{
-      tx = await instance.redeemEther(secret,reciever,{from:sender});
+      tx = await instance.redeemEther(hah,{from:sender});
       }catch(ex){
         return true;
       }
